@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Strike - TPS Pro Camera</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #000; }
+        #gui { position: absolute; top: 20px; left: 20px; color: #00ffcc; pointer-events: none; z-index: 10; }
+        #crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 24px; height: 24px;
+            border: 2px solid rgba(0, 255, 204, 0.5); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            z-index: 5;
+        }
+        #crosshair::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 4px; background: #00ffcc;
+            border-radius: 50%; transform: translate(-50%, -50%);
+        }
+        
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.85); color: white; text-align: center; cursor: pointer;
+            z-index: 100;
+        }
+        #health-bar-container {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 300px; height: 12px; background: rgba(51, 51, 51, 0.5); border: 1px solid #00ffcc;
+            z-index: 10; border-radius: 6px; overflow: hidden;
+        }
+        #health-bar { width: 100%; height: 100%; background: #00ffcc; transition: width 0.3s; box-shadow: 0 0 10px #00ffcc; }
+        .stats { font-size: 20px; text-shadow: 0 0 10px #00ffcc; margin-bottom: 5px; font-weight: bold; }
+        button { transition: all 0.3s; }
+        button:hover { transform: scale(1.1); background: #fff !important; color: #000 !important; }
+    </style>
+</head>
+<body>
+
+    <div id="gui">
+        <div class="stats">PONTUAÇÃO: <span id="score">0</span></div>
+        <div class="stats">RECORDE: <span id="highscore">0</span></div>
+    </div>
+    <div id="crosshair"></div>
+    <div id="health-bar-container"><div id="health-bar"></div></div>
+    
+    <div id="overlay">
+        <h1 style="color: #00ffcc; font-size: 56px; margin-bottom: 10px; letter-spacing: 8px; text-shadow: 0 0 20px #00ffcc;">CYBER STRIKE</h1>
+        <p style="max-width: 600px; line-height: 1.6; font-size: 18px; color: #aaa;">DOMINE O CAMPO DE BATALHA COM A NOVA CÂMARA DINÂMICA</p>
+        <p style="margin-top: 20px;">MOVIMENTO: <b style="color: #00ffcc;">WASD</b> | MIRAR: <b style="color: #00ffcc;">MOUSE</b> | DISPARAR: <b style="color: #00ffcc;">CLIQUE</b></p>
+        <button id="start-btn" style="padding: 18px 50px; font-size: 22px; background: #00ffcc; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; margin-top: 30px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);">INICIAR OPERAÇÃO</button>
+    </div>
+
+    <script>
+        // Configurações Globais
+        let scene, camera, renderer, clock;
+        let player, playerModel;
+        let enemies = [];
+        let bullets = [];
+        let particles = [];
+        let score = 0;
+        let highscore = localStorage.getItem('cyberStrikeHighscore') || 0;
+        let health = 100;
+        let gameActive = false;
+        
+        // Input e Câmera
+        const keys = {};
+        let mouseX = 0, mouseY = 0;
+        let targetYaw = 0, targetPitch = 0;
+        let currentYaw = 0, currentPitch = 0;
+
+        // Parâmetros da Câmara TPS
+        const cameraConfig = {
+            distance: 5,
+            height: 2.2,
+            sideOffset: 0.8, // Over-the-shoulder
+            lookAtHeight: 1.5,
+            smoothness: 0.12 // Quanto menor, mais suave (lerp)
+        };
+
+        document.getElementById('highscore').innerText = highscore;
+
+        function init() {
+            scene = new THREE.Scene();
+            // céu cinza
+            scene.background = new THREE.Color(0x888888);
+            scene.fog = new THREE.FogExp2(0x888888, 0.015);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            clock = new THREE.Clock();
+
+            // Iluminação
+            scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+            const mainLight = new THREE.PointLight(0x00ffcc, 1.5, 100);
+            mainLight.position.set(0, 10, 0);
+            scene.add(mainLight);
+
+            // Chão Grid
+            const floorSize = 500;
+            // textura de grama carregada de servidor externo
+            const grassTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/grasslight-big.jpg');
+            grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+            grassTexture.repeat.set( floorSize / 10, floorSize / 10 );
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(floorSize, floorSize),
+                new THREE.MeshPhongMaterial({ map: grassTexture })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            const grid = new THREE.GridHelper(floorSize, 100, 0x00ffcc, 0x111111);
+            grid.position.y = 0.01;
+            scene.add(grid);
+
+            // Jogador (Contentor de Lógica)
+            player = new THREE.Group();
+            scene.add(player);
+
+            // Modelo Visual do Jogador
+            playerModel = new THREE.Group();
+            player.add(playerModel);
+
+            const bodyGeom = new THREE.CylinderGeometry(0.4, 0.4, 1.4, 16);
+            const mat = new THREE.MeshPhongMaterial({ color: 0x888888, emissive: 0x222222 });
+            const body = new THREE.Mesh(bodyGeom, mat);
+            body.position.y = 0.7;
+            body.castShadow = true;
+            playerModel.add(body);
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), mat);
+            head.position.y = 1.6;
+            playerModel.add(head);
+
+            // Arma estilizada
+            const weapon = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, 0.2, 1),
+                new THREE.MeshPhongMaterial({ color: 0x333333 })
+            );
+            weapon.position.set(0.5, 1.2, 0.4);
+            playerModel.add(weapon);
+
+            // Eventos
+            window.addEventListener('resize', onWindowResize, false);
+            window.addEventListener('keydown', (e) => keys[e.code] = true);
+            window.addEventListener('keyup', (e) => keys[e.code] = false);
+            window.addEventListener('mousedown', shoot);
+            document.getElementById('start-btn').addEventListener('click', startGame);
+        }
+
+        function startGame() {
+            document.getElementById('overlay').style.display = 'none';
+            document.body.requestPointerLock();
+            gameActive = true;
+            score = 0;
+            health = 100;
+            player.position.set(0, 0, 0);
+            updateUI();
+            
+            enemies.forEach(e => scene.remove(e.mesh));
+            enemies = [];
+            bullets.forEach(b => scene.remove(b.mesh));
+            bullets = [];
+            
+            for(let i = 0; i < 5; i++) spawnEnemy();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Entrada de Rato (Atualiza alvos de rotação)
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === document.body) {
+                targetYaw -= e.movementX * 0.002;
+                targetPitch -= e.movementY * 0.002;
+                targetPitch = Math.max(-Math.PI/3, Math.min(Math.PI/4, targetPitch));
+            }
+        });
+
+        function updateCamera() {
+            // Suavização da rotação (Lerp)
+            currentYaw += (targetYaw - currentYaw) * cameraConfig.smoothness;
+            currentPitch += (targetPitch - currentPitch) * cameraConfig.smoothness;
+
+            // O modelo do jogador roda com o Yaw da câmara
+            playerModel.rotation.y = currentYaw;
+
+            // Cálculo da posição da câmara baseada em Yaw e Pitch
+            // Criamos um offset que rode de acordo com a mira
+            const offset = new THREE.Vector3(cameraConfig.sideOffset, cameraConfig.height, -cameraConfig.distance);
+            offset.applyEuler(new THREE.Euler(currentPitch, currentYaw, 0));
+
+            const desiredPosition = new THREE.Vector3().copy(player.position).add(offset);
+            
+            // Aplica a posição à câmara suavemente
+            camera.position.copy(desiredPosition);
+
+            // Onde a câmara deve olhar
+            const lookAtTarget = new THREE.Vector3()
+                .copy(player.position)
+                .add(new THREE.Vector3(0, cameraConfig.lookAtHeight, 0));
+            
+            // Adiciona uma pequena projeção para onde o jogador está a mirar
+            const viewDir = new THREE.Vector3(0, 0, 10).applyEuler(new THREE.Euler(currentPitch, currentYaw, 0));
+            lookAtTarget.add(viewDir);
+
+            camera.lookAt(lookAtTarget);
+        }
+
+        function spawnEnemy() {
+            const dist = 40 + Math.random() * 20;
+            const angle = Math.random() * Math.PI * 2;
+            
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 2, 1.2),
+                new THREE.MeshPhongMaterial({ color: 0x00ff00, emissive: 0x004400 })
+            );
+            
+            mesh.position.set(
+                player.position.x + Math.cos(angle) * dist,
+                1,
+                player.position.z + Math.sin(angle) * dist
+            );
+            mesh.castShadow = true;
+            scene.add(mesh);
+            
+            enemies.push({ mesh: mesh, hp: 3, speed: 0.05 + (score * 0.0002) });
+        }
+
+        function shoot() {
+            if (!gameActive || document.pointerLockElement !== document.body) return;
+
+            const bullet = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15),
+                new THREE.MeshBasicMaterial({ color: 0x00ffcc })
+            );
+            
+            // A bala sai na direção exata da câmara/mira
+            const direction = new THREE.Vector3(0, 0, 1);
+            direction.applyEuler(new THREE.Euler(currentPitch, currentYaw, 0));
+            
+            bullet.position.copy(player.position);
+            bullet.position.y += 1.3; // Altura da arma
+            
+            bullets.push({
+                mesh: bullet,
+                velocity: direction.multiplyScalar(2.0),
+                life: 100
+            });
+            
+            scene.add(bullet);
+        }
+
+        function createExplosion(pos, color) {
+            for (let i = 0; i < 15; i++) {
+                const p = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.2, 0.2, 0.2),
+                    new THREE.MeshBasicMaterial({ color: color })
+                );
+                p.position.copy(pos);
+                particles.push({ 
+                    mesh: p, 
+                    vel: new THREE.Vector3((Math.random()-0.5)*0.4, Math.random()*0.4, (Math.random()-0.5)*0.4), 
+                    life: 1.0 
+                });
+                scene.add(p);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('health-bar').style.width = Math.max(0, health) + '%';
+            if (score > highscore) {
+                highscore = score;
+                localStorage.setItem('cyberStrikeHighscore', highscore);
+                document.getElementById('highscore').innerText = highscore;
+            }
+        }
+
+        function update() {
+            if (!gameActive) return;
+
+            // Movimento baseado na câmara
+            const moveSpeed = 0.2;
+            const moveDir = new THREE.Vector3();
+            if (keys['KeyW']) moveDir.z += 1;
+            if (keys['KeyS']) moveDir.z -= 1;
+            if (keys['KeyA']) moveDir.x += 1;
+            if (keys['KeyD']) moveDir.x -= 1;
+
+            if (moveDir.length() > 0) {
+                moveDir.normalize().applyEuler(new THREE.Euler(0, currentYaw, 0));
+                player.position.addScaledVector(moveDir, moveSpeed);
+            }
+
+            updateCamera();
+
+            // Lógica de Balas, Inimigos e Partículas
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.mesh.position.add(b.velocity);
+                b.life--;
+                enemies.forEach(e => {
+                    if (b.mesh.position.distanceTo(e.mesh.position) < 1.5) {
+                        e.hp--; b.life = 0;
+                        createExplosion(b.mesh.position, 0x00ffcc);
+                    }
+                });
+                if (b.life <= 0) { scene.remove(b.mesh); bullets.splice(i, 1); }
+            }
+
+            if (Math.random() < 0.02) spawnEnemy();
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                const toPlayer = new THREE.Vector3().subVectors(player.position, e.mesh.position).normalize();
+                e.mesh.position.addScaledVector(toPlayer, e.speed);
+                e.mesh.lookAt(player.position.x, 1, player.position.z);
+
+                if (e.mesh.position.distanceTo(player.position) < 1.8) {
+                    health -= 0.5; updateUI();
+                    if (health <= 0) {
+                        gameActive = false;
+                        document.exitPointerLock();
+                        document.getElementById('overlay').style.display = 'flex';
+                        document.querySelector('#overlay h1').innerText = "DERROTADO";
+                        document.getElementById('start-btn').innerText = "TENTAR NOVAMENTE";
+                    }
+                }
+                if (e.hp <= 0) {
+                    createExplosion(e.mesh.position, 0x00ff00);
+                    scene.remove(e.mesh); enemies.splice(i, 1);
+                    score += 100; updateUI();
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.mesh.position.add(p.vel);
+                p.life -= 0.02;
+                p.mesh.scale.setScalar(p.life);
+                if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            init();
+            animate();
+        };
+    </script>
+</body>
+</html>

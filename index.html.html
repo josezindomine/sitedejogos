@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Jogos | Portfólio</title>
+    <!-- Importando Tailwind CSS para o visual -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importando ícones da biblioteca Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Pequenos ajustes de animação para os botões */
+        .game-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        /* Rolagem suave */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- CABEÇALHO -->
+    <header class="bg-gray-800 shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2 text-blue-400">
+                <i data-lucide="gamepad-2" class="w-8 h-8"></i>
+                <h1 class="text-2xl font-bold text-white tracking-wider">Dev<span class="text-blue-500">Games</span></h1>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-300">
+                <a href="#pc-games" class="hover:text-blue-400 transition">Jogos de PC</a>
+                <a href="#mobile-games" class="hover:text-green-400 transition">Jogos de Mobile</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ÁREA PRINCIPAL (HERO) -->
+    <section class="max-w-6xl mx-auto px-4 py-16 text-center">
+        <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-4">Bem-vindo ao meu Portfólio de Jogos"feito por Joselito Miguel</h2>
+        <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
+            Aqui você encontra todos os projetos que desenvolvi. Escolha sua plataforma favorita abaixo e divirta-se!
+        </p>
+        <div class="flex justify-center space-x-4">
+            <a href="#pc-games" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold transition flex items-center space-x-2">
+                <i data-lucide="monitor"></i>
+                <span>Ver Jogos de PC</span>
+            </a>
+            <a href="#mobile-games" class="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-lg font-bold transition flex items-center space-x-2">
+                <i data-lucide="smartphone"></i>
+                <span>Ver Jogos Mobile</span>
+            </a>
+        </div>
+    </section>
+
+    <main class="flex-grow max-w-6xl mx-auto px-4 py-8 space-y-16 w-full">
+
+        <!-- SESSÃO: JOGOS DE PC -->
+        <section id="pc-games" class="scroll-mt-24">
+            <div class="flex items-center space-x-3 mb-8 border-b border-gray-700 pb-4">
+                <i data-lucide="monitor" class="w-10 h-10 text-blue-500"></i>
+                <h2 class="text-3xl font-bold text-white">Jogos de PC</h2>
+            </div>
+
+            <!-- Grid de Subcategorias de PC -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Subcategoria: Tiro / Ação -->
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center space-x-2 mb-4 text-gray-300">
+                        <i data-lucide="crosshair" class="w-5 h-5"></i>
+                        <h3 class="text-xl font-semibold text-white">Ação & Tiro</h3>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-6">Jogos FPS, sobrevivência e muita adrenalina.</p>
+                    
+                    <div class="flex flex-col space-y-3">
+                        <!-- Botão do Jogo (AQUI VOCÊ COLOCA SEU LINK E NOME) -->
+                        <a href="         " class="game-btn bg-gray-700 hover:bg-blue-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                            Meu Jogo de Tiro 3D
+                        </a>
+                        <a href="Tirozombie.html" class="game-btn bg-gray-700 hover:bg-blue-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                            Sobrevivência Zumbi
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Subcategoria: Ping pong -->
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center space-x-2 mb-4 text-gray-300">
+                        <i data-lucide="swords" class="w-5 h-5"></i>
+                        <h3 class="text-xl font-semibold text-white">Ping Pong atari</h3>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-6">Cada tacada, e uma possiblididade diferente.</p>
+                    
+                    <div class="flex flex-col space-y-3">
+                        <a href="pingpong.html" class="game-btn bg-gray-700 hover:bg-blue-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                            A Lenda das bolas
+                        </a>
+                        <!-- Adicione mais botões aqui se precisar -->
+                    </div>
+                </div>
+
+                <!-- Subcategoria: Estratégia -->
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center space-x-2 mb-4 text-gray-300">
+                        <i data-lucide="map" class="w-5 h-5"></i>
+                        <h3 class="text-xl font-semibold text-white">Estratégia</h3>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-6">Pense bem antes de cada movimento.</p>
+                    
+                    <div class="flex flex-col space-y-3">
+                        <a href="tetris.html" class="game-btn bg-gray-700 hover:bg-blue-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                           Tetris
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- SESSÃO: JOGOS DE MOBILE -->
+        <section id="mobile-games" class="scroll-mt-24">
+            <div class="flex items-center space-x-3 mb-8 border-b border-gray-700 pb-4">
+                <i data-lucide="smartphone" class="w-10 h-10 text-green-500"></i>
+                <h2 class="text-3xl font-bold text-white">Jogos de Mobile</h2>
+            </div>
+
+            <!-- Grid de Subcategorias Mobile -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Subcategoria: Casual -->
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-green-500 transition">
+                    <div class="flex items-center space-x-2 mb-4 text-gray-300">
+                        <i data-lucide="coffee" class="w-5 h-5"></i>
+                        <h3 class="text-xl font-semibold text-white">Casual</h3>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-6">Perfeitos para jogar no ônibus ou na fila.</p>
+                    
+                    <div class="flex flex-col space-y-3">
+                        <a href="pastajogo/flappy_clone.html" class="game-btn bg-gray-700 hover:bg-green-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                            Pássaro Voador
+                        </a>
+                        <a href="pastajogo/clicker.html" class="game-btn bg-gray-700 hover:bg-green-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                            Super Clicker
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Subcategoria: Puzzle -->
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-green-500 transition">
+                    <div class="flex items-center space-x-2 mb-4 text-gray-300">
+                        <i data-lucide="puzzle" class="w-5 h-5"></i>
+                        <h3 class="text-xl font-semibold text-white">Quebra-cabeça</h3>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-6">Desafie sua mente com estes enigmas.</p>
+                    
+                    <div class="flex flex-col space-y-3">
+                        <a href="pastajogo/blocos.html" class="game-btn bg-gray-700 hover:bg-green-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                            Encaixe de Blocos
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Subcategoria: Plataforma -->
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-green-500 transition">
+                    <div class="flex items-center space-x-2 mb-4 text-gray-300">
+                        <i data-lucide="footprints" class="w-5 h-5"></i>
+                        <h3 class="text-xl font-semibold text-white">Plataforma</h3>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-6">Pule e corra em fases 2D incríveis.</p>
+                    
+                    <div class="flex flex-col space-y-3">
+                        <a href="pastajogo/runner.html" class="game-btn bg-gray-700 hover:bg-green-600 text-center text-white py-2 px-4 rounded font-medium block w-full">
+                            Infinite Runner Mobile
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer class="bg-gray-950 border-t border-gray-800 mt-12 py-8 text-center text-gray-500">
+        <p>&copy; 2026 Meus Jogos. Todos os direitos reservados.</p>
+        <p class="text-sm mt-2">© Joselito Miguel</p>
+    </footer>
+
+    <!-- Script para renderizar os ícones -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
